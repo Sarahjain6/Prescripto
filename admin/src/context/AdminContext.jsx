@@ -5,7 +5,7 @@ import { toast } from "react-toastify"
 export const AdminContext = createContext()
 
 const AdminContextProvider = ({ children }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000"
+  const backendUrl = "https://doctor-backend-cbt3.onrender.com";
   const [aToken, setAToken] = useState(localStorage.getItem("aToken") || "")
   const [doctors, setDoctors] = useState([])
   const [appointments, setAppointments] = useState([])
