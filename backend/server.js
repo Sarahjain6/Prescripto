@@ -23,9 +23,21 @@ connectCloudinary();
 
 app.use(express.json());
 
+// Keep Render free tier alive
+import https from "https";
+setInterval(() => {
+  https.get("https://doctor-backend-cbt3.onrender.com/", () => {});
+}, 840000); // ping every 14 minutes
+
 app.use(cors({
-  origin: "*",
-  credentials: true
+  origin: [
+    "https://prescripto-odgm.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token", "atoken", "dtoken"]
 }));
 
 app.get("/", (req, res) => res.send("Prescripto API Running ✅"));
