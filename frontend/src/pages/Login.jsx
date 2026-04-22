@@ -117,9 +117,7 @@ const Login = () => {
           </form>
 
           {/* Demo login button */}
-          {mode === 'login' && (
-           
-          )}
+         
 
           <p className="text-center text-sm text-slate-500 mt-6">
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
