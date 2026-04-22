@@ -16,12 +16,6 @@ const Login = () => {
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const fillDemo = () => {
-    setMode('login')
-    setForm({ name: '', email: 'demo@prescripto.com', password: 'demo1234' })
-    toast.info('Demo credentials filled! Click Sign In.')
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -48,7 +42,6 @@ const Login = () => {
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-br from-sky-50 via-white to-cyan-50 px-4 py-12">
       <div className="w-full max-w-md">
 
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-gradient-to-br from-sky-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +58,6 @@ const Login = () => {
 
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
 
-          {/* Mode toggle */}
           <div className="flex bg-slate-100 rounded-2xl p-1 mb-6">
             {[['login', 'Sign In'], ['signup', 'Sign Up']].map(([val, label]) => (
               <button key={val} onClick={() => setMode(val)}
@@ -116,9 +108,6 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Demo login button */}
-         
-
           <p className="text-center text-sm text-slate-500 mt-6">
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
@@ -128,7 +117,6 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Admin link */}
         <div className="mt-4 text-center">
           <p className="text-xs text-slate-400">
             Are you an admin or doctor?{' '}
