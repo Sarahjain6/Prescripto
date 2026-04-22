@@ -118,14 +118,7 @@ const Login = () => {
 
           {/* Demo login button */}
           {mode === 'login' && (
-            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-              <p className="text-xs font-bold text-amber-700 mb-2">🧪 Try Demo Account</p>
-              <p className="text-xs text-amber-600 mb-3">Register first with any email, then sign in. Or use our demo account:</p>
-              <button onClick={fillDemo}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">
-                ⚡ Fill Demo Credentials
-              </button>
-            </div>
+           
           )}
 
           <p className="text-center text-sm text-slate-500 mt-6">

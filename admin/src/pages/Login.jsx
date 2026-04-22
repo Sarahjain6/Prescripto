@@ -175,37 +175,7 @@ const Login = () => {
           </form>
 
           {/* Credentials hint */}
-          <div className={`mt-5 rounded-2xl p-4 border ${mode === 'Admin' ? 'bg-violet-50 border-violet-100' : 'bg-emerald-50 border-emerald-100'}`}>
-            <p className={`text-xs font-bold mb-2 ${mode === 'Admin' ? 'text-violet-700' : 'text-emerald-700'}`}>
-              {mode === 'Admin' ? '🛡️ Admin Credentials' : '👨‍⚕️ Doctor Credentials'}
-            </p>
-            {mode === 'Admin' ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-violet-600">Email:</span>
-                  <code className="text-xs bg-white px-2 py-0.5 rounded-lg text-violet-800 font-bold border border-violet-200">admin@prescripto.com</code>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-violet-600">Password:</span>
-                  <code className="text-xs bg-white px-2 py-0.5 rounded-lg text-violet-800 font-bold border border-violet-200">qwerty123</code>
-                </div>
-                <button
-                  onClick={fillAdmin}
-                  className="w-full mt-2 bg-violet-500 hover:bg-violet-600 text-white text-xs font-bold py-2 rounded-xl transition-colors"
-                >
-                  ⚡ Auto-fill Admin Credentials
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-xs text-emerald-600 mb-2">Use the email of any doctor added via Admin panel. Default password set during doctor creation.</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-emerald-600">Password:</span>
-                  <code className="text-xs bg-white px-2 py-0.5 rounded-lg text-emerald-800 font-bold border border-emerald-200">password you set</code>
-                </div>
-              </div>
-            )}
-          </div>
+          
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
