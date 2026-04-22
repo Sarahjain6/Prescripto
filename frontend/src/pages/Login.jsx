@@ -141,7 +141,7 @@ const Login = () => {
         <div className="mt-4 text-center">
           <p className="text-xs text-slate-400">
             Are you an admin or doctor?{' '}
-            <a href="https://prescripto-admin.vercel.app" target="_blank" rel="noreferrer"
+            <a href="https://prescripto-nn59.vercel.app" target="_blank" rel="noreferrer"
               className="text-sky-500 hover:underline font-semibold">
               Go to Admin Portal →
             </a>
