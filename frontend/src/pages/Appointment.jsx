@@ -57,7 +57,7 @@ const Appointment = () => {
         { headers: { token } }
       )
       if (data.success) {
-        toast.success('Appointment booked successfully!')
+        toast.success('Appointment booked! Pay now in My Appointments.')
         getDoctorsData()
         navigate('/my-appointments')
       } else {
@@ -84,12 +84,8 @@ const Appointment = () => {
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mb-8">
         <div className="flex flex-col md:flex-row">
           <div className="md:w-64 bg-gradient-to-br from-sky-50 to-cyan-50 flex items-end justify-center pt-8">
-            <img
-              src={docInfo.image}
-              alt={docInfo.name}
-              className="h-56 object-cover object-top"
-              onError={e => e.target.src = `https://ui-avatars.com/api/?name=${docInfo.name}&background=0ea5e9&color=fff&size=200`}
-            />
+            <img src={docInfo.image} alt={docInfo.name} className="h-56 object-cover object-top"
+              onError={e => e.target.src = `https://ui-avatars.com/api/?name=${docInfo.name}&background=0ea5e9&color=fff&size=200`} />
           </div>
           <div className="flex-1 p-8">
             <div className="flex items-start justify-between mb-4">
@@ -101,27 +97,18 @@ const Appointment = () => {
                 {docInfo.available ? '● Available' : '● Unavailable'}
               </span>
             </div>
-
             <div className="flex flex-wrap gap-3 mb-6">
-              {[{ label: docInfo.degree }, { label: docInfo.experience }, { label: `${currencySymbol}${docInfo.fees} / visit` }].map((tag, i) => (
-                <span key={i} className="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-sm font-medium">{tag.label}</span>
+              {[docInfo.degree, docInfo.experience, `${currencySymbol}${docInfo.fees} / visit`].map((tag, i) => (
+                <span key={i} className="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-sm font-medium">{tag}</span>
               ))}
             </div>
-
             <div className="mb-4">
               <h3 className="font-bold text-slate-800 mb-2">About</h3>
               <p className="text-slate-600 text-sm leading-relaxed">{docInfo.about}</p>
             </div>
-
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-slate-400 text-xs mb-1">Address Line 1</p>
-                <p className="font-medium text-slate-700">{docInfo.address?.line1}</p>
-              </div>
-              <div>
-                <p className="text-slate-400 text-xs mb-1">Address Line 2</p>
-                <p className="font-medium text-slate-700">{docInfo.address?.line2}</p>
-              </div>
+              <div><p className="text-slate-400 text-xs mb-1">Address Line 1</p><p className="font-medium text-slate-700">{docInfo.address?.line1}</p></div>
+              <div><p className="text-slate-400 text-xs mb-1">Address Line 2</p><p className="font-medium text-slate-700">{docInfo.address?.line2}</p></div>
             </div>
           </div>
         </div>
@@ -129,16 +116,13 @@ const Appointment = () => {
 
       {/* Slot picker */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-        <h2 className="text-xl font-extrabold text-slate-900 mb-6">Book Your Appointment</h2>
+        <h2 className="text-xl font-extrabold text-slate-900 mb-6">Select Appointment Slot</h2>
 
         {/* Days */}
         <div className="flex gap-3 overflow-x-auto pb-2 mb-6">
           {docSlots.map((slot, i) => (
-            <button
-              key={i}
-              onClick={() => { setSelectedDay(i); setSelectedTime('') }}
-              className={`flex-shrink-0 flex flex-col items-center gap-1 px-5 py-3 rounded-2xl border-2 font-semibold text-sm transition-all ${selectedDay === i ? 'bg-gradient-to-b from-sky-500 to-cyan-500 border-sky-500 text-white shadow-lg shadow-sky-200' : 'border-slate-200 text-slate-700 hover:border-sky-300'}`}
-            >
+            <button key={i} onClick={() => { setSelectedDay(i); setSelectedTime('') }}
+              className={`flex-shrink-0 flex flex-col items-center gap-1 px-5 py-3 rounded-2xl border-2 font-semibold text-sm transition-all ${selectedDay === i ? 'bg-gradient-to-b from-sky-500 to-cyan-500 border-sky-500 text-white shadow-lg' : 'border-slate-200 text-slate-700 hover:border-sky-300'}`}>
               <span className="text-xs opacity-70">{daysOfWeek[slot.date.getDay()]}</span>
               <span className="text-lg font-extrabold">{slot.date.getDate()}</span>
             </button>
@@ -148,37 +132,34 @@ const Appointment = () => {
         {/* Times */}
         <div className="flex flex-wrap gap-3 mb-8">
           {docSlots[selectedDay]?.times.map(({ time, booked }) => (
-            <button
-              key={time}
-              disabled={booked}
-              onClick={() => setSelectedTime(time)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${booked ? 'opacity-40 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400 line-through' : selectedTime === time ? 'bg-gradient-to-r from-sky-500 to-cyan-500 border-sky-500 text-white shadow-md shadow-sky-200' : 'border-slate-200 text-slate-700 hover:border-sky-300 hover:text-sky-600'}`}
-            >
+            <button key={time} disabled={booked} onClick={() => setSelectedTime(time)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${booked ? 'opacity-40 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400 line-through' : selectedTime === time ? 'bg-gradient-to-r from-sky-500 to-cyan-500 border-sky-500 text-white shadow-md' : 'border-slate-200 text-slate-700 hover:border-sky-300 hover:text-sky-600'}`}>
               {time}
             </button>
           ))}
         </div>
 
-        {/* Booking summary */}
+        {/* Summary */}
         {selectedTime && (
-          <div className="bg-sky-50 rounded-2xl p-4 mb-6 border border-sky-100">
-            <h3 className="font-bold text-sky-800 mb-2">Booking Summary</h3>
+          <div className="bg-sky-50 rounded-2xl p-5 mb-6 border border-sky-100">
+            <h3 className="font-bold text-sky-800 mb-3">Booking Summary</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><p className="text-sky-600 text-xs mb-0.5">Doctor</p><p className="font-semibold text-slate-800">{docInfo.name}</p></div>
               <div><p className="text-sky-600 text-xs mb-0.5">Date & Time</p><p className="font-semibold text-slate-800">{docSlots[selectedDay]?.date.toDateString()} · {selectedTime}</p></div>
-              <div><p className="text-sky-600 text-xs mb-0.5">Consultation Fee</p><p className="font-semibold text-emerald-600 text-base">{currencySymbol}{docInfo.fees}</p></div>
-              <div><p className="text-sky-600 text-xs mb-0.5">Speciality</p><p className="font-semibold text-slate-800">{docInfo.speciality}</p></div>
+              <div><p className="text-sky-600 text-xs mb-0.5">Fee</p><p className="font-bold text-emerald-600 text-lg">{currencySymbol}{docInfo.fees}</p></div>
+              <div><p className="text-sky-600 text-xs mb-0.5">Payment</p><p className="font-semibold text-slate-800">Razorpay (UPI / Card)</p></div>
             </div>
           </div>
         )}
 
-        <button
-          onClick={bookAppointment}
-          disabled={!selectedTime || loading}
-          className="w-full md:w-auto bg-gradient-to-r from-sky-500 to-cyan-500 text-white px-10 py-4 rounded-2xl font-bold text-base hover:shadow-xl hover:shadow-sky-200 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-        >
-          {loading ? 'Booking...' : `Confirm Appointment · ${currencySymbol}${docInfo.fees}`}
+        <button onClick={bookAppointment} disabled={!selectedTime || loading}
+          className="w-full md:w-auto bg-gradient-to-r from-sky-500 to-cyan-500 text-white px-10 py-4 rounded-2xl font-bold text-base hover:shadow-xl hover:shadow-sky-200 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          {loading
+            ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Booking...</>
+            : `Confirm Booking · ${currencySymbol}${docInfo.fees}`
+          }
         </button>
+        <p className="text-xs text-slate-400 mt-3">You can pay via Razorpay (UPI, Cards, NetBanking) on the next screen.</p>
       </div>
     </div>
   )
