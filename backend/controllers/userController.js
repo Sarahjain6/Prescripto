@@ -2,11 +2,11 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import validator from "validator";
 import { v2 as cloudinary } from "cloudinary";
-import crypto from "crypto";
-import Razorpay from "razorpay";
 import userModel from "../models/userModel.js";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import Razorpay from "razorpay";
+import crypto from "crypto";
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -92,10 +92,9 @@ const bookAppointment = async (req, res) => {
       slots_booked[slotDate] = [slotTime];
     }
     const userData = await userModel.findById(userId).select("-password");
-    const docDataForSnapshot = docData.toObject();
-    delete docDataForSnapshot.slots_booked;
+    delete docData.slots_booked;
     const newAppointment = new appointmentModel({
-      userId, docId, userData, docData: docDataForSnapshot,
+      userId, docId, userData, docData,
       amount: docData.fees, slotTime, slotDate, date: Date.now(),
     });
     await newAppointment.save();
@@ -157,7 +156,7 @@ const paymentRazorpay = async (req, res) => {
   }
 };
 
-// Verify Razorpay payment signature
+// Verify Razorpay payment
 const verifyRazorpay = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
