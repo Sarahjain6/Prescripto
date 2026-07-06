@@ -2,6 +2,7 @@
 services:
   - type: web
     name: doctor-backend
-    env: native
+    env: node
+    buildCommand: npm install
     startCommand: node server.js
     plan: free

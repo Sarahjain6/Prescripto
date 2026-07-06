@@ -170,7 +170,7 @@ const ContactMessages = () => {
                       ? <span className="px-2.5 py-1 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full">Read</span>
                       : <span className="px-2.5 py-1 bg-sky-100 text-sky-600 text-xs font-semibold rounded-full">New</span>
                     }
-                    <a href={`mailto:${selected.email}?subject=Re: ${selected.subject}`}
+                    <a href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject)}`}
                       className="flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-600 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -197,7 +197,7 @@ const ContactMessages = () => {
                 {/* Quick reply */}
                 <div className="mt-6">
                   <h3 className="font-bold text-slate-800 mb-3 text-sm">Quick Reply via Email</h3>
-                  <a
+                  
                     href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject)}&body=Hi ${encodeURIComponent(selected.name)},%0A%0AThank you for reaching out to Prescripto.%0A%0A`}
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-cyan-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-sky-200 transition-all"
                   >

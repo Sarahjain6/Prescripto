@@ -36,19 +36,6 @@ const Login = () => {
     setLoading(false)
   }
 
-  // Quick fill credentials
-  const fillAdmin = () => {
-    setMode('Admin')
-    setEmail('admin@prescripto.com')
-    setPassword('qwerty123')
-  }
-
-  const fillDoctor = (docEmail) => {
-    setMode('Doctor')
-    setEmail(docEmail)
-    setPassword('password123')
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
@@ -62,47 +49,6 @@ const Login = () => {
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900">Prescripto</h1>
           <p className="text-slate-500 text-sm mt-1">Admin & Doctor Portal</p>
-        </div>
-
-        {/* Quick Login Cards */}
-        <div className="mb-6">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-3">Quick Login</p>
-          <div className="grid grid-cols-2 gap-3">
-
-            {/* Admin Quick Login */}
-            <button
-              onClick={fillAdmin}
-              className="group relative bg-white border-2 border-slate-200 hover:border-sky-400 rounded-2xl p-4 text-left transition-all hover:shadow-lg hover:shadow-sky-100 hover:-translate-y-0.5"
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <p className="font-bold text-slate-800 text-sm">Admin</p>
-              <p className="text-xs text-slate-400 mt-0.5">Full access</p>
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-xs bg-sky-100 text-sky-600 font-bold px-2 py-0.5 rounded-full">Click to fill</span>
-              </div>
-            </button>
-
-            {/* Doctor Quick Login */}
-            <button
-              onClick={() => fillDoctor('doctor@prescripto.com')}
-              className="group relative bg-white border-2 border-slate-200 hover:border-sky-400 rounded-2xl p-4 text-left transition-all hover:shadow-lg hover:shadow-sky-100 hover:-translate-y-0.5"
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <p className="font-bold text-slate-800 text-sm">Doctor</p>
-              <p className="text-xs text-slate-400 mt-0.5">Your appointments</p>
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-xs bg-sky-100 text-sky-600 font-bold px-2 py-0.5 rounded-full">Click to fill</span>
-              </div>
-            </button>
-          </div>
         </div>
 
         {/* Login Form Card */}
@@ -173,9 +119,6 @@ const Login = () => {
               }
             </button>
           </form>
-
-          {/* Credentials hint */}
-          
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
