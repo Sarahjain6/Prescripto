@@ -11,12 +11,26 @@ const ContactMessages = () => {
   const [filter, setFilter] = useState('all') // all | unread | read
 
   const fetchMessages = async () => {
+    setLoading(true)
+  
     try {
-      const { data } = await axios.get(`${backendUrl}/api/contact/all`, { headers: { atoken: aToken } })
-      if (data.success) setMessages(data.contacts)
-      else toast.error(data.message)
-    } catch (e) { toast.error(e.message) }
-    setLoading(false)
+      const { data } = await axios.get(
+        `${backendUrl}/api/contact/all`,
+        {
+          headers: { atoken: aToken }
+        }
+      )
+  
+      if (data.success) {
+        setMessages(data.contacts)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const markRead = async (contactId) => {
@@ -196,17 +210,35 @@ const ContactMessages = () => {
 
                 {/* Quick reply */}
                 <div className="mt-6">
-                  <h3 className="font-bold text-slate-800 mb-3 text-sm">Quick Reply via Email</h3>
-                  
-                    href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject)}&body=Hi ${encodeURIComponent(selected.name)},%0A%0AThank you for reaching out to Prescripto.%0A%0A`}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-cyan-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-sky-200 transition-all"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Open in Mail App
-                  </a>
-                </div>
+  <h3 className="font-bold text-slate-800 mb-3 text-sm">
+    Quick Reply via Email
+  </h3>
+
+  <a
+    href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(
+      selected.subject
+    )}&body=Hi ${encodeURIComponent(
+      selected.name
+    )},%0A%0AThank you for reaching out to Prescripto.%0A%0A`}
+    className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-cyan-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-sky-200 transition-all"
+  >
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+      />
+    </svg>
+
+    Open in Mail App
+  </a>
+</div>
               </div>
             </>
           ) : (
