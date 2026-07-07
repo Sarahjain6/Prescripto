@@ -180,8 +180,8 @@ const Login = () => {
 
         <p className="text-center text-xs text-slate-400 mt-6">
           Patient portal? Visit{' '}
-          <a href="https://prescripto-odgm.vercel.app" target="_blank" rel="noreferrer" className="text-sky-500 hover:underline font-semibold">
-            prescripto-odgm.vercel.app
+          <a href="https://prescripto-k3en.vercel.app/login" target="_blank" rel="noreferrer" className="text-sky-500 hover:underline font-semibold">
+            prescripto-k3en.vercel.app
           </a>
         </p>
       </div>
