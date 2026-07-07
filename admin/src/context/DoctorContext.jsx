@@ -11,11 +11,27 @@ const DoctorContextProvider = ({ children }) => {
   const [dashData, setDashData] = useState(null)
   const [profileData, setProfileData] = useState(null)
 
+  // Session expired / invalid token => clear it and force back to the login screen
+  const logoutDoctor = () => {
+    localStorage.removeItem("dToken")
+    setDToken("")
+  }
+
+  const handleFailure = (message) => {
+    const sessionExpired = /jwt expired|invalid token|invalid signature|not authorized|jwt malformed/i.test(message || "")
+    if (sessionExpired) {
+      logoutDoctor()
+      toast.error("Session expired. Please log in again.")
+    } else {
+      toast.error(message)
+    }
+  }
+
   const getAppointments = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/appointments`, { headers: { dtoken: dToken } })
       if (data.success) setAppointments(data.appointments.reverse())
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -23,7 +39,7 @@ const DoctorContextProvider = ({ children }) => {
     try {
       const { data } = await axios.post(`${backendUrl}/api/doctor/complete-appointment`, { appointmentId }, { headers: { dtoken: dToken } })
       if (data.success) { toast.success(data.message); getAppointments() }
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -31,7 +47,7 @@ const DoctorContextProvider = ({ children }) => {
     try {
       const { data } = await axios.post(`${backendUrl}/api/doctor/cancel-appointment`, { appointmentId }, { headers: { dtoken: dToken } })
       if (data.success) { toast.success(data.message); getAppointments() }
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -39,7 +55,7 @@ const DoctorContextProvider = ({ children }) => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/dashboard`, { headers: { dtoken: dToken } })
       if (data.success) setDashData(data.dashData)
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -47,6 +63,7 @@ const DoctorContextProvider = ({ children }) => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/profile`, { headers: { dtoken: dToken } })
       if (data.success) setProfileData(data.profileData)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 

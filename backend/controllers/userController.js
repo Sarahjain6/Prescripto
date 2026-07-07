@@ -5,13 +5,9 @@ import { v2 as cloudinary } from "cloudinary";
 import userModel from "../models/userModel.js";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
-import Razorpay from "razorpay";
-import crypto from "crypto";
+import Stripe from "stripe";
 
-const razorpayInstance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // REGISTER USER
 const registerUser = async (req, res) => {
@@ -134,49 +130,55 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
-// ─── RAZORPAY PAYMENT ───────────────────────────────────────
+// ─── STRIPE PAYMENT ───────────────────────────────────────
 
-// Create Razorpay order
-const paymentRazorpay = async (req, res) => {
+// Create Stripe checkout session
+const paymentStripe = async (req, res) => {
   try {
     const { appointmentId } = req.body;
+    const origin = req.headers.origin || "https://prescripto-odgm.vercel.app";
     const appointmentData = await appointmentModel.findById(appointmentId);
     if (!appointmentData || appointmentData.cancelled) {
       return res.json({ success: false, message: "Appointment not found or cancelled" });
     }
-    const options = {
-      amount: appointmentData.amount * 100,
-      currency: process.env.CURRENCY || "INR",
-      receipt: appointmentId,
-    };
-    const order = await razorpayInstance.orders.create(options);
-    res.json({ success: true, order });
+    const session = await stripeInstance.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [{
+        price_data: {
+          currency: "inr",
+          product_data: {
+            name: `Appointment with ${appointmentData.docData?.name}`,
+            description: `${appointmentData.docData?.speciality} · ${appointmentData.slotDate?.replace(/_/g, "/")} at ${appointmentData.slotTime}`,
+          },
+          unit_amount: appointmentData.amount * 100,
+        },
+        quantity: 1,
+      }],
+      mode: "payment",
+      success_url: `${origin}/my-appointments?payment=success&appointmentId=${appointmentId}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/my-appointments?payment=cancel`,
+      metadata: { appointmentId },
+    });
+    res.json({ success: true, session_url: session.url, sessionId: session.id });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
 
-// Verify Razorpay payment
-const verifyRazorpay = async (req, res) => {
+// Verify Stripe payment
+const verifyStripe = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
-
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    if (expectedSignature !== razorpay_signature) {
-      return res.json({ success: false, message: "Payment verification failed" });
+    const { sessionId, appointmentId } = req.body;
+    const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status === "paid") {
+      await appointmentModel.findByIdAndUpdate(appointmentId, {
+        payment: true,
+        paymentMethod: "stripe",
+      });
+      res.json({ success: true, message: "Payment verified" });
+    } else {
+      res.json({ success: false, message: "Payment not completed" });
     }
-
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      payment: true,
-      paymentMethod: "razorpay",
-      razorpay_order_id,
-      razorpay_payment_id,
-    });
-    res.json({ success: true, message: "Payment verified" });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -185,5 +187,5 @@ const verifyRazorpay = async (req, res) => {
 export {
   registerUser, loginUser, getProfile, updateProfile,
   bookAppointment, listAppointment, cancelAppointment,
-  paymentRazorpay, verifyRazorpay,
+  paymentStripe, verifyStripe,
 };
