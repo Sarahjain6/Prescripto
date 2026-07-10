@@ -20,14 +20,7 @@ const App = () => {
   const { aToken } = useAdminContext()
   const { dToken } = useDoctorContext()
 
-  if (!aToken && !dToken) {
-    return (
-      <>
-        <ToastContainer position="top-right" autoClose={3000} />
-        <Login />
-      </>
-    )
-  }
+  if (!aToken && !dToken) return <Login />
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
