@@ -1,7 +1,0 @@
-# backend/render.yaml
-services:
-  - type: web
-    name: doctor-backend
-    env: native
-    startCommand: node server.js
-    plan: free
