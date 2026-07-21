@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import validator from "validator";
-import crypto from "crypto";
 import { v2 as cloudinary } from "cloudinary";
-import Razorpay from "razorpay";
 import userModel from "../models/userModel.js";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import Razorpay from "razorpay";
+import crypto from "crypto";
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -134,7 +134,7 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
-// ─── RAZORPAY PAYMENT ──────────────────────────────────────
+// ─── RAZORPAY PAYMENT ───────────────────────────────────────
 
 // Create Razorpay order
 const paymentRazorpay = async (req, res) => {
@@ -144,32 +144,22 @@ const paymentRazorpay = async (req, res) => {
     if (!appointmentData || appointmentData.cancelled) {
       return res.json({ success: false, message: "Appointment not found or cancelled" });
     }
-    if (appointmentData.payment) {
-      return res.json({ success: false, message: "Appointment already paid" });
-    }
-
     const options = {
-      amount: appointmentData.amount * 100, // paise
+      amount: appointmentData.amount * 100,
       currency: process.env.CURRENCY || "INR",
       receipt: appointmentId,
     };
-
     const order = await razorpayInstance.orders.create(options);
-
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      razorpay_order_id: order.id,
-    });
-
     res.json({ success: true, order });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
 
-// Verify Razorpay payment (signature check — never trust the client's word alone)
+// Verify Razorpay payment
 const verifyRazorpay = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
 
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -180,18 +170,13 @@ const verifyRazorpay = async (req, res) => {
       return res.json({ success: false, message: "Payment verification failed" });
     }
 
-    const appointmentData = await appointmentModel.findOne({ razorpay_order_id });
-    if (!appointmentData) {
-      return res.json({ success: false, message: "Appointment not found" });
-    }
-
-    await appointmentModel.findByIdAndUpdate(appointmentData._id, {
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
       payment: true,
       paymentMethod: "razorpay",
+      razorpay_order_id,
       razorpay_payment_id,
     });
-
-    res.json({ success: true, message: "Payment successful" });
+    res.json({ success: true, message: "Payment verified" });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
