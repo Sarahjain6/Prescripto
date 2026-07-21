@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -17,8 +17,24 @@ import DoctorProfile from './pages/doctor/DoctorProfile'
 import ContactMessages from './pages/admin/ContactMessages'
 
 const App = () => {
-  const { aToken } = useAdminContext()
-  const { dToken } = useDoctorContext()
+  const { aToken, setAToken } = useAdminContext()
+  const { dToken, setDToken } = useDoctorContext()
+
+  // Arriving via a "?forceLogin=true" link (e.g. the patient site's
+  // "Go to Admin Portal" link) always clears any stored session so the
+  // login screen asks for credentials, even if a token was left in this browser.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('forceLogin') === 'true') {
+      localStorage.removeItem('aToken')
+      localStorage.removeItem('dToken')
+      setAToken('')
+      setDToken('')
+      params.delete('forceLogin')
+      const newUrl = window.location.pathname + (params.toString() ? `?${params}` : '')
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [])
 
   if (!aToken && !dToken) return <Login />
 

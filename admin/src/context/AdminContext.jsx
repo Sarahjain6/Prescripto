@@ -11,11 +11,27 @@ const AdminContextProvider = ({ children }) => {
   const [appointments, setAppointments] = useState([])
   const [dashData, setDashData] = useState(null)
 
+  // Session expired / invalid token => clear it and force back to the login screen
+  const logoutAdmin = () => {
+    localStorage.removeItem("aToken")
+    setAToken("")
+  }
+
+  const handleFailure = (message) => {
+    const sessionExpired = /jwt expired|invalid token|invalid signature|not authorized|jwt malformed/i.test(message || "")
+    if (sessionExpired) {
+      logoutAdmin()
+      toast.error("Session expired. Please log in again.")
+    } else {
+      toast.error(message)
+    }
+  }
+
   const getAllDoctors = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/admin/all-doctors`, { headers: { atoken: aToken } })
       if (data.success) setDoctors(data.doctors)
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -23,7 +39,7 @@ const AdminContextProvider = ({ children }) => {
     try {
       const { data } = await axios.post(`${backendUrl}/api/admin/change-availability`, { docId }, { headers: { atoken: aToken } })
       if (data.success) { toast.success(data.message); getAllDoctors() }
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -31,7 +47,7 @@ const AdminContextProvider = ({ children }) => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/admin/appointments`, { headers: { atoken: aToken } })
       if (data.success) setAppointments(data.appointments.reverse())
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -39,7 +55,7 @@ const AdminContextProvider = ({ children }) => {
     try {
       const { data } = await axios.post(`${backendUrl}/api/admin/cancel-appointment`, { appointmentId }, { headers: { atoken: aToken } })
       if (data.success) { toast.success(data.message); getAllAppointments() }
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -47,7 +63,7 @@ const AdminContextProvider = ({ children }) => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/admin/dashboard`, { headers: { atoken: aToken } })
       if (data.success) setDashData(data.dashData)
-      else toast.error(data.message)
+      else handleFailure(data.message)
     } catch (e) { toast.error(e.message) }
   }
 

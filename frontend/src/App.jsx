@@ -12,7 +12,6 @@ import Contact from './pages/Contact'
 import Appointment from './pages/Appointment'
 import MyAppointments from './pages/MyAppointments'
 import MyProfile from './pages/MyProfile'
-import ChatBot from './components/ChatBot'
 
 const App = () => {
   return (
@@ -33,7 +32,6 @@ const App = () => {
         </Routes>
       </main>
       <Footer />
-      <ChatBot />
     </div>
   )
 }

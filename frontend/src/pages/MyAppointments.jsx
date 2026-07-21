@@ -28,6 +28,7 @@ const MyAppointments = () => {
     } catch (error) { toast.error(error.message) }
   }
 
+  // Opens Razorpay's own checkout modal — no redirect away from the app.
   const payWithRazorpay = async (appointmentId) => {
     setPayingId(appointmentId)
     try {
@@ -42,13 +43,13 @@ const MyAppointments = () => {
         return
       }
 
-      const { order } = data
+      const order = data.order
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: 'Appointment Payment',
-        description: 'Doctor Appointment Payment',
+        name: 'Prescripto',
+        description: 'Appointment payment',
         order_id: order.id,
         handler: async (response) => {
           try {
@@ -58,7 +59,6 @@ const MyAppointments = () => {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                appointmentId,
               },
               { headers: { token } }
             )
@@ -67,20 +67,26 @@ const MyAppointments = () => {
             getUserAppointments()
           } catch (error) {
             toast.error(error.message)
+          } finally {
+            setPayingId(null)
           }
         },
         modal: {
           ondismiss: () => setPayingId(null),
         },
-        theme: { color: '#7c3aed' },
+        theme: { color: '#0ea5e9' },
       }
 
-      const razorpayCheckout = new window.Razorpay(options)
-      razorpayCheckout.open()
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', () => {
+        toast.error('Payment failed')
+        setPayingId(null)
+      })
+      rzp.open()
     } catch (error) {
       toast.error(error.message)
+      setPayingId(null)
     }
-    setPayingId(null)
   }
 
   useEffect(() => {
@@ -150,7 +156,7 @@ const MyAppointments = () => {
                         {payingId === apt._id ? (
                           <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Processing...</>
                         ) : (
-                          <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Pay with Razorpay</>
+                          <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 2h4.2l-3.9 12.6h3.8L18 2h-3.9l-4.4 9.6L8.6 2z"/></svg> Pay with Razorpay</>
                         )}
                       </button>
                     )}
