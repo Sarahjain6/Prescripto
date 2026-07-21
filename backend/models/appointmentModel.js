@@ -15,7 +15,6 @@ const appointmentSchema = new mongoose.Schema({
   paymentMethod: { type: String, default: "pending" },
   razorpay_order_id: { type: String, default: "" },
   razorpay_payment_id: { type: String, default: "" },
-  razorpay_signature: { type: String, default: "" },
 });
 
 const appointmentModel = mongoose.models.appointment || mongoose.model("appointment", appointmentSchema);
