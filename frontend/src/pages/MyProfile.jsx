@@ -1,13 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { useAppContext } from '../context/AppContext'
 
 const MyProfile = () => {
+  const navigate = useNavigate()
   const { userData, setUserData, token, backendUrl, loadUserProfileData } = useAppContext()
   const [isEdit, setIsEdit] = useState(false)
   const [image, setImage] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!token) navigate('/login')
+  }, [token])
 
   const updateProfile = async () => {
     setLoading(true)

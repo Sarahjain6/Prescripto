@@ -4,12 +4,35 @@ import { toast } from "react-toastify";
 
 export const AppContext = createContext();
 
+// Decodes a JWT payload (no signature check needed client-side) to see if
+// it's already past its "exp" claim, so an old/expired token can be purged
+// immediately instead of being sent to the server first.
+const isTokenExpired = (t) => {
+  if (!t) return true;
+  try {
+    const payload = JSON.parse(atob(t.split(".")[1]));
+    if (!payload.exp) return false;
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
+const getValidStoredToken = (key) => {
+  const stored = localStorage.getItem(key);
+  if (stored && isTokenExpired(stored)) {
+    localStorage.removeItem(key);
+    return "";
+  }
+  return stored || "";
+};
+
 const AppContextProvider = ({ children }) => {
   const backendUrl = "https://doctor-backend-cbt3.onrender.com";
   const currencySymbol = "₹";
 
   const [doctors, setDoctors] = useState([]);
-  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [token, setToken] = useState(() => getValidStoredToken("token"));
   const [userData, setUserData] = useState(null);
 
   // Clears a stale/expired session quietly, without surfacing a raw

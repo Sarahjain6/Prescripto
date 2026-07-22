@@ -4,9 +4,32 @@ import { toast } from "react-toastify"
 
 export const DoctorContext = createContext()
 
+// Decodes a JWT payload (no signature check needed client-side) to see if
+// it's already past its "exp" claim, so an old/expired token can be purged
+// immediately instead of triggering a failed request first.
+const isTokenExpired = (t) => {
+  if (!t) return true
+  try {
+    const payload = JSON.parse(atob(t.split(".")[1]))
+    if (!payload.exp) return false
+    return payload.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
+
+const getValidStoredToken = (key) => {
+  const stored = localStorage.getItem(key)
+  if (stored && isTokenExpired(stored)) {
+    localStorage.removeItem(key)
+    return ""
+  }
+  return stored || ""
+}
+
 const DoctorContextProvider = ({ children }) => {
   const backendUrl = "https://doctor-backend-cbt3.onrender.com";
-  const [dToken, setDToken] = useState(localStorage.getItem("dToken") || "")
+  const [dToken, setDToken] = useState(() => getValidStoredToken("dToken"))
   const [appointments, setAppointments] = useState([])
   const [dashData, setDashData] = useState(null)
   const [profileData, setProfileData] = useState(null)
