@@ -134,7 +134,7 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
-// ─── RAZORPAY PAYMENT ─────────────────────────────────────
+// ─── RAZORPAY PAYMENT ───────────────────────────────────────
 
 // Create Razorpay order
 const paymentRazorpay = async (req, res) => {
@@ -145,7 +145,7 @@ const paymentRazorpay = async (req, res) => {
       return res.json({ success: false, message: "Appointment not found or cancelled" });
     }
     const options = {
-      amount: appointmentData.amount * 100, // amount in paise
+      amount: appointmentData.amount * 100,
       currency: process.env.CURRENCY || "INR",
       receipt: appointmentId,
     };
@@ -161,26 +161,22 @@ const verifyRazorpay = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
 
-    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
       return res.json({ success: false, message: "Payment verification failed" });
     }
 
-    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
-    if (orderInfo.status === "paid") {
-      await appointmentModel.findByIdAndUpdate(appointmentId || orderInfo.receipt, {
-        payment: true,
-        paymentMethod: "razorpay",
-      });
-      res.json({ success: true, message: "Payment successful" });
-    } else {
-      res.json({ success: false, message: "Payment not completed" });
-    }
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
+      payment: true,
+      paymentMethod: "razorpay",
+      razorpay_order_id,
+      razorpay_payment_id,
+    });
+    res.json({ success: true, message: "Payment verified" });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
