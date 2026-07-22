@@ -12,10 +12,12 @@ const Login = () => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMsg('')
     try {
       if (mode === 'Admin') {
         const { data } = await axios.post(`${backendUrl}/api/admin/login`, { email, password })
@@ -23,16 +25,16 @@ const Login = () => {
           localStorage.setItem('aToken', data.token)
           setAToken(data.token)
           toast.success('Welcome back, Admin!')
-        } else toast.error(data.message)
+        } else setErrorMsg(data.message || 'Invalid credentials')
       } else {
         const { data } = await axios.post(`${backendUrl}/api/doctor/login`, { email, password })
         if (data.success) {
           localStorage.setItem('dToken', data.token)
           setDToken(data.token)
           toast.success('Welcome back, Doctor!')
-        } else toast.error(data.message)
+        } else setErrorMsg(data.message || 'Invalid credentials')
       }
-    } catch (err) { toast.error(err.message) }
+    } catch (err) { setErrorMsg(err.message) }
     setLoading(false)
   }
 
@@ -113,7 +115,7 @@ const Login = () => {
             {['Admin', 'Doctor'].map(m => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setEmail(''); setPassword('') }}
+                onClick={() => { setMode(m); setEmail(''); setPassword(''); setErrorMsg('') }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${mode === m
                   ? 'bg-white text-sky-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'}`}
@@ -127,6 +129,11 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-semibold rounded-xl px-4 py-3">
+                {errorMsg}
+              </div>
+            )}
             {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
@@ -180,8 +187,8 @@ const Login = () => {
 
         <p className="text-center text-xs text-slate-400 mt-6">
           Patient portal? Visit{' '}
-          <a href="https://prescripto-odgm.vercel.app" target="_blank" rel="noreferrer" className="text-sky-500 hover:underline font-semibold">
-            prescripto-odgm.vercel.app
+          <a href="https://prescripto-k3en.vercel.app/login" target="_blank" rel="noreferrer" className="text-sky-500 hover:underline font-semibold">
+            prescripto-k3en.vercel.app
           </a>
         </p>
       </div>

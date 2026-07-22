@@ -19,11 +19,19 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (mode === 'signup' && !form.name.trim()) {
+    const name = form.name.trim()
+    const email = form.email.trim().toLowerCase()
+    const password = form.password
+
+    if (mode === 'signup' && !name) {
       toast.error('Please enter your name')
       return
     }
-    if (mode === 'signup' && form.password.length < 8) {
+    if (!email) {
+      toast.error('Please enter your email')
+      return
+    }
+    if (mode === 'signup' && password.length < 8) {
       toast.error('Password must be at least 8 characters')
       return
     }
@@ -32,26 +40,27 @@ const Login = () => {
     try {
       const url = mode === 'login' ? '/api/user/login' : '/api/user/register'
       const payload = mode === 'login'
-        ? { email: form.email, password: form.password }
-        : form
+        ? { email, password }
+        : { name, email, password }
       const { data } = await axios.post(`${backendUrl}${url}`, payload)
       if (data.success) {
         localStorage.setItem('token', data.token)
         setToken(data.token)
         toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!')
+        navigate('/')
       } else {
-        toast.error(data.message)
+        toast.error(data.message || 'Something went wrong. Please try again.')
       }
     } catch (error) {
-      // Surface the backend's message when available, otherwise fall back
-      // to a clearer network error instead of a raw axios message
-      const backendMessage = error.response?.data?.message
-      if (backendMessage) {
-        toast.error(backendMessage)
+      // Prefer the server's own message when available (e.g. validation errors
+      // returned with a non-2xx status), fall back to a generic network message.
+      const serverMessage = error.response?.data?.message
+      if (serverMessage) {
+        toast.error(serverMessage)
       } else if (error.code === 'ERR_NETWORK') {
-        toast.error('Cannot reach the server. It may be waking up (Render free tier) — please try again in a few seconds.')
+        toast.error('Cannot reach the server. Please check your connection and try again.')
       } else {
-        toast.error(error.message)
+        toast.error(error.message || 'Something went wrong. Please try again.')
       }
     }
     setLoading(false)
@@ -138,7 +147,7 @@ const Login = () => {
         <div className="mt-4 text-center">
           <p className="text-xs text-slate-400">
             Are you an admin or doctor?{' '}
-            <a href="https://prescripto-nn59.vercel.app" target="_blank" rel="noreferrer"
+            <a href="https://prescripto-nn59.vercel.app?forceLogin=true" target="_blank" rel="noreferrer"
               className="text-sky-500 hover:underline font-semibold">
               Go to Admin Portal →
             </a>
