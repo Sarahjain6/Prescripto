@@ -16,12 +16,22 @@ const razorpayInstance = new Razorpay({
 // REGISTER USER
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
+    name = typeof name === "string" ? name.trim() : name;
+    email = typeof email === "string" ? email.trim().toLowerCase() : email;
+
     if (!name || !email || !password) return res.json({ success: false, message: "Missing details" });
     if (!validator.isEmail(email)) return res.json({ success: false, message: "Invalid email" });
     if (password.length < 8) return res.json({ success: false, message: "Password must be at least 8 characters" });
+
     const existingUser = await userModel.findOne({ email });
     if (existingUser) return res.json({ success: false, message: "Email already registered" });
+
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not set in the environment");
+      return res.json({ success: false, message: "Server is misconfigured. Please contact support." });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = new userModel({ name, email, password: hashedPassword });
@@ -29,22 +39,41 @@ const registerUser = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    // Duplicate key race (two simultaneous signups with the same email)
+    if (error.code === 11000) {
+      return res.json({ success: false, message: "Email already registered" });
+    }
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors)[0]?.message || "Invalid details";
+      return res.json({ success: false, message: firstError });
+    }
+    console.error("Register error:", error);
+    res.json({ success: false, message: "Something went wrong. Please try again." });
   }
 };
 
 // LOGIN USER
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    email = typeof email === "string" ? email.trim().toLowerCase() : email;
+    if (!email || !password) return res.json({ success: false, message: "Missing details" });
+
     const user = await userModel.findOne({ email });
     if (!user) return res.json({ success: false, message: "User not found" });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.json({ success: false, message: "Invalid credentials" });
+
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not set in the environment");
+      return res.json({ success: false, message: "Server is misconfigured. Please contact support." });
+    }
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    console.error("Login error:", error);
+    res.json({ success: false, message: "Something went wrong. Please try again." });
   }
 };
 
