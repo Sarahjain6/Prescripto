@@ -42,50 +42,28 @@ const chatWithBot = async (req, res) => {
       return res.json({ success: false, message: "Chatbot is not configured yet" });
     }
 
-    // Cap message length — this is a support/triage bot, not a document
-    // pipeline, so anything beyond ~1000 chars is either abuse or noise
-    // that just burns tokens for no benefit.
-    const trimmedMessage = message.trim().slice(0, 1000);
-
-    // history: [{ role: "user"|"bot", text: "..." }, ...] from the client.
-    // 6 turns (3 back-and-forths) is plenty of context for a short FAQ/triage
-    // bot and keeps the request payload — and therefore latency and cost —
-    // smaller than the previous 10-turn window.
+    // history: [{ role: "user"|"model", text: "..." }, ...] from the client
     const contents = Array.isArray(history)
       ? history
           .filter((h) => h && h.text)
-          .slice(-6)
+          .slice(-10) // keep last 10 turns to bound token usage
           .map((h) => ({
             role: h.role === "bot" ? "model" : "user",
-            parts: [{ text: String(h.text).slice(0, 1000) }],
+            parts: [{ text: h.text }],
           }))
       : [];
 
-    contents.push({ role: "user", parts: [{ text: trimmedMessage }] });
+    contents.push({ role: "user", parts: [{ text: message }] });
 
-    // Hard timeout so a stalled upstream call can't hold the connection open
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          maxOutputTokens: 300,
-          temperature: 0.4,
-          // Disable Gemini 2.5 Flash's internal "thinking" pass. Replies here
-          // are short, conversational FAQ/triage answers that don't need
-          // multi-step reasoning — thinking tokens only add latency and cost.
-          thinkingConfig: { thinkingBudget: 0 },
-          abortSignal: controller.signal,
-        },
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents,
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        maxOutputTokens: 300,
+        temperature: 0.4,
+      },
+    });
 
     const reply = response.text?.trim();
     if (!reply) {

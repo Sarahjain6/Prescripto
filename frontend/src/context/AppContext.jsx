@@ -5,12 +5,19 @@ import { toast } from "react-toastify";
 export const AppContext = createContext();
 
 const AppContextProvider = ({ children }) => {
-  const backendUrl = "https://doctor-backend-cbt3.onrender.com";
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://doctor-backend-cbt3.onrender.com";
   const currencySymbol = "₹";
 
   const [doctors, setDoctors] = useState([]);
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [userData, setUserData] = useState(null);
+
+  // Clears an invalid/expired session without bothering the user with a raw error
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    setUserData(null);
+  };
 
   const getDoctorsData = async () => {
     try {
@@ -18,7 +25,7 @@ const AppContextProvider = ({ children }) => {
       if (data.success) setDoctors(data.doctors);
       else toast.error(data.message);
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
@@ -27,10 +34,19 @@ const AppContextProvider = ({ children }) => {
       const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {
         headers: { token },
       });
-      if (data.success) setUserData(data.userData);
-      else toast.error(data.message);
+      if (data.success) {
+        setUserData(data.userData);
+      } else if (data.tokenExpired) {
+        // Stale/expired token from a previous session — just log out quietly,
+        // don't greet the user with a "jwt expired" error on page load
+        logout();
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
-      toast.error(error.message);
+      // Network/server error while checking the session — don't clear the token,
+      // it might just be a temporary connectivity issue (e.g. Render cold start)
+      console.error("Failed to load profile:", error);
     }
   };
 
@@ -48,7 +64,7 @@ const AppContextProvider = ({ children }) => {
 
   const value = {
     doctors, getDoctorsData,
-    token, setToken,
+    token, setToken, logout,
     userData, setUserData, loadUserProfileData,
     backendUrl, currencySymbol,
   };

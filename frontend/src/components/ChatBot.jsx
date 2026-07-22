@@ -1,14 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 
 const SPECIALITIES = ['General physician', 'Gynecologist', 'Dermatologist', 'Pediatricians', 'Neurologist', 'Gastroenterologist']
-
-// Only the last N turns are sent as context on every request. The backend
-// also caps this, but trimming client-side keeps the request payload small
-// and avoids the browser shipping an ever-growing array on every message.
-const MAX_HISTORY_TURNS = 10
 
 const ChatBot = () => {
   const { backendUrl } = useAppContext()
@@ -20,66 +15,42 @@ const ChatBot = () => {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef(null)
-  const abortRef = useRef(null)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, open])
 
-  // Cancel any in-flight request if the widget unmounts mid-request
-  useEffect(() => () => abortRef.current?.abort(), [])
-
-  const send = useCallback(async () => {
+  const send = async () => {
     const text = input.trim()
     if (!text || loading) return
     setInput('')
     setMessages(prev => [...prev, { role: 'user', text }])
     setLoading(true)
-
-    // Cancel a previous stale request, if any, before starting a new one
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
     try {
-      // Trim history client-side so payload size stays bounded on long chats
-      const trimmedHistory = messages.slice(-MAX_HISTORY_TURNS)
-      const { data } = await axios.post(
-        `${backendUrl}/api/chat/message`,
-        { message: text, history: trimmedHistory },
-        { signal: controller.signal, timeout: 20000 }
-      )
+      const { data } = await axios.post(`${backendUrl}/api/chat/message`, {
+        message: text,
+        history: messages,
+      })
       if (data.success) {
         setMessages(prev => [...prev, { role: 'bot', text: data.reply }])
       } else {
         setMessages(prev => [...prev, { role: 'bot', text: "Sorry, I'm having trouble right now. Please try again, or email support@prescripto.com." }])
       }
     } catch (error) {
-      if (axios.isCancel(error) || error.name === 'CanceledError') {
-        // A newer message superseded this request — nothing to show
-      } else {
-        setMessages(prev => [...prev, { role: 'bot', text: "Sorry, I'm having trouble connecting. Please try again shortly." }])
-      }
+      setMessages(prev => [...prev, { role: 'bot', text: "Sorry, I'm having trouble connecting. Please try again shortly." }])
     }
     setLoading(false)
-  }, [input, loading, messages, backendUrl])
+  }
 
-  const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       send()
     }
-  }, [send])
+  }
 
-  // If the bot's reply mentions a known speciality, offer a quick link.
-  // Computed once per message (not on every render) and cached.
-  const matchedSpecialities = useMemo(() => {
-    return messages.map(m => {
-      if (m.role !== 'bot') return null
-      const lower = m.text?.toLowerCase() || ''
-      return SPECIALITIES.find(s => lower.includes(s.toLowerCase())) || null
-    })
-  }, [messages])
+  // If the bot's reply mentions a known speciality, offer a quick link
+  const matchedSpeciality = (text) => SPECIALITIES.find(s => text?.toLowerCase().includes(s.toLowerCase()))
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -99,28 +70,25 @@ const ChatBot = () => {
 
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-slate-50">
-            {messages.map((m, i) => {
-              const speciality = matchedSpecialities[i]
-              return (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    m.role === 'user'
-                      ? 'bg-sky-500 text-white rounded-br-sm'
-                      : 'bg-white text-slate-700 border border-slate-200 rounded-bl-sm'
-                  }`}>
-                    {m.text}
-                    {speciality && (
-                      <button
-                        onClick={() => navigate(`/doctors/${speciality}`)}
-                        className="mt-2 block w-full text-center text-xs font-semibold bg-sky-50 text-sky-600 px-3 py-1.5 rounded-lg hover:bg-sky-100 transition-colors"
-                      >
-                        View {speciality}s →
-                      </button>
-                    )}
-                  </div>
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  m.role === 'user'
+                    ? 'bg-sky-500 text-white rounded-br-sm'
+                    : 'bg-white text-slate-700 border border-slate-200 rounded-bl-sm'
+                }`}>
+                  {m.text}
+                  {m.role === 'bot' && matchedSpeciality(m.text) && (
+                    <button
+                      onClick={() => navigate(`/doctors/${matchedSpeciality(m.text)}`)}
+                      className="mt-2 block w-full text-center text-xs font-semibold bg-sky-50 text-sky-600 px-3 py-1.5 rounded-lg hover:bg-sky-100 transition-colors"
+                    >
+                      View {matchedSpeciality(m.text)}s →
+                    </button>
+                  )}
                 </div>
-              )
-            })}
+              </div>
+            ))}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl rounded-bl-sm flex gap-1">

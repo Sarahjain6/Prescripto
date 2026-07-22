@@ -19,19 +19,11 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const name = form.name.trim()
-    const email = form.email.trim().toLowerCase()
-    const password = form.password
-
-    if (mode === 'signup' && !name) {
+    if (mode === 'signup' && !form.name.trim()) {
       toast.error('Please enter your name')
       return
     }
-    if (!email) {
-      toast.error('Please enter your email')
-      return
-    }
-    if (mode === 'signup' && password.length < 8) {
+    if (mode === 'signup' && form.password.length < 8) {
       toast.error('Password must be at least 8 characters')
       return
     }
@@ -40,26 +32,26 @@ const Login = () => {
     try {
       const url = mode === 'login' ? '/api/user/login' : '/api/user/register'
       const payload = mode === 'login'
-        ? { email, password }
-        : { name, email, password }
+        ? { email: form.email, password: form.password }
+        : form
       const { data } = await axios.post(`${backendUrl}${url}`, payload)
       if (data.success) {
         localStorage.setItem('token', data.token)
         setToken(data.token)
         toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!')
       } else {
-        toast.error(data.message || 'Something went wrong. Please try again.')
+        toast.error(data.message)
       }
     } catch (error) {
-      // Prefer the server's own message when available (e.g. validation errors
-      // returned with a non-2xx status), fall back to a generic network message.
-      const serverMessage = error.response?.data?.message
-      if (serverMessage) {
-        toast.error(serverMessage)
+      // Surface the backend's message when available, otherwise fall back
+      // to a clearer network error instead of a raw axios message
+      const backendMessage = error.response?.data?.message
+      if (backendMessage) {
+        toast.error(backendMessage)
       } else if (error.code === 'ERR_NETWORK') {
-        toast.error('Cannot reach the server. Please check your connection and try again.')
+        toast.error('Cannot reach the server. It may be waking up (Render free tier) — please try again in a few seconds.')
       } else {
-        toast.error(error.message || 'Something went wrong. Please try again.')
+        toast.error(error.message)
       }
     }
     setLoading(false)
