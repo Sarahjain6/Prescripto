@@ -8,7 +8,6 @@ import adminRouter from "./routes/adminRoute.js";
 import doctorRouter from "./routes/doctorRoute.js";
 import userRouter from "./routes/userRoute.js";
 import contactRouter from "./routes/contactRoute.js";
-import chatRouter from "./routes/chatRoute.js";
 
 // Ensure uploads folder exists
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
@@ -36,7 +35,6 @@ app.use("/api/admin", adminRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/user", userRouter);
 app.use("/api/contact", contactRouter);
-app.use("/api/chat", chatRouter);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
