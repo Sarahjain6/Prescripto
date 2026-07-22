@@ -12,14 +12,6 @@ const AppContextProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [userData, setUserData] = useState(null);
 
-  // Clears a stale/expired session quietly, without surfacing a raw
-  // "jwt expired" error to the user just for opening the site
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken("");
-    setUserData(null);
-  };
-
   const getDoctorsData = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
@@ -35,15 +27,10 @@ const AppContextProvider = ({ children }) => {
       const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {
         headers: { token },
       });
-      if (data.success) {
-        setUserData(data.userData);
-      } else if (data.tokenExpired) {
-        logout();
-      } else {
-        toast.error(data.message);
-      }
+      if (data.success) setUserData(data.userData);
+      else toast.error(data.message);
     } catch (error) {
-      console.error("Failed to load profile:", error);
+      toast.error(error.message);
     }
   };
 
@@ -61,7 +48,7 @@ const AppContextProvider = ({ children }) => {
 
   const value = {
     doctors, getDoctorsData,
-    token, setToken, logout,
+    token, setToken,
     userData, setUserData, loadUserProfileData,
     backendUrl, currencySymbol,
   };

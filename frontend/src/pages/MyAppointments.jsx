@@ -28,6 +28,45 @@ const MyAppointments = () => {
     } catch (error) { toast.error(error.message) }
   }
 
+  const initRazorpayPayment = (order, appointmentId) => {
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'Prescripto',
+      description: 'Appointment Payment',
+      order_id: order.id,
+      handler: async (response) => {
+        try {
+          const { data } = await axios.post(
+            `${backendUrl}/api/user/verify-razorpay`,
+            {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              appointmentId,
+            },
+            { headers: { token } }
+          )
+          if (data.success) {
+            toast.success('Payment successful! 🎉')
+            getUserAppointments()
+          } else {
+            toast.error(data.message || 'Payment verification failed')
+          }
+        } catch (error) {
+          toast.error(error.message)
+        }
+      },
+      modal: {
+        ondismiss: () => toast.warn('Payment cancelled'),
+      },
+      theme: { color: '#7c3aed' },
+    }
+    const razorpayObject = new window.Razorpay(options)
+    razorpayObject.open()
+  }
+
   const payWithRazorpay = async (appointmentId) => {
     setPayingId(appointmentId)
     try {
@@ -36,47 +75,11 @@ const MyAppointments = () => {
         { appointmentId },
         { headers: { token } }
       )
-      if (!data.success) {
+      if (data.success) {
+        initRazorpayPayment(data.order, appointmentId)
+      } else {
         toast.error(data.message)
-        setPayingId(null)
-        return
       }
-
-      const { order } = data
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Appointment Payment',
-        description: 'Doctor Appointment Payment',
-        order_id: order.id,
-        handler: async (response) => {
-          try {
-            const { data: verifyData } = await axios.post(
-              `${backendUrl}/api/user/verify-razorpay`,
-              {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                appointmentId,
-              },
-              { headers: { token } }
-            )
-            if (verifyData.success) toast.success('Payment successful! 🎉')
-            else toast.error('Payment verification failed')
-            getUserAppointments()
-          } catch (error) {
-            toast.error(error.message)
-          }
-        },
-        modal: {
-          ondismiss: () => setPayingId(null),
-        },
-        theme: { color: '#7c3aed' },
-      }
-
-      const razorpayCheckout = new window.Razorpay(options)
-      razorpayCheckout.open()
     } catch (error) {
       toast.error(error.message)
     }
@@ -150,7 +153,7 @@ const MyAppointments = () => {
                         {payingId === apt._id ? (
                           <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Processing...</>
                         ) : (
-                          <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Pay with Razorpay</>
+                          <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.834 2.256 16.66 6.5H12.9l1.174-4.244a.3.3 0 0 0-.29-.381H10.8a.4.4 0 0 0-.385.294L6.166 21.744a.3.3 0 0 0 .29.381h2.986a.4.4 0 0 0 .385-.294l1.634-5.915 2.336 6.055a.4.4 0 0 0 .373.254h3.096a.3.3 0 0 0 .277-.412l-2.85-7.31c2.24-.63 4.42-2.51 5.12-5.05.98-3.55-1.03-6.2-3.98-7.197z"/></svg> Pay with Razorpay</>
                         )}
                       </button>
                     )}

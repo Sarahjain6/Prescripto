@@ -37,9 +37,6 @@ export const authUser = async (req, res, next) => {
     req.userId = decoded.id;
     next();
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
-      return res.json({ success: false, message: "Session expired, please login again", tokenExpired: true });
-    }
-    res.json({ success: false, message: "Not Authorized", tokenExpired: true });
+    res.json({ success: false, message: error.message });
   }
 };

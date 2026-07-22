@@ -16,22 +16,12 @@ const razorpayInstance = new Razorpay({
 // REGISTER USER
 const registerUser = async (req, res) => {
   try {
-    let { name, email, password } = req.body;
-    name = typeof name === "string" ? name.trim() : name;
-    email = typeof email === "string" ? email.trim().toLowerCase() : email;
-
+    const { name, email, password } = req.body;
     if (!name || !email || !password) return res.json({ success: false, message: "Missing details" });
     if (!validator.isEmail(email)) return res.json({ success: false, message: "Invalid email" });
     if (password.length < 8) return res.json({ success: false, message: "Password must be at least 8 characters" });
-
     const existingUser = await userModel.findOne({ email });
     if (existingUser) return res.json({ success: false, message: "Email already registered" });
-
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET is not set in the environment");
-      return res.json({ success: false, message: "Server is misconfigured. Please contact support." });
-    }
-
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = new userModel({ name, email, password: hashedPassword });
@@ -39,41 +29,22 @@ const registerUser = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token });
   } catch (error) {
-    // Duplicate key race (two simultaneous signups with the same email)
-    if (error.code === 11000) {
-      return res.json({ success: false, message: "Email already registered" });
-    }
-    if (error.name === "ValidationError") {
-      const firstError = Object.values(error.errors)[0]?.message || "Invalid details";
-      return res.json({ success: false, message: firstError });
-    }
-    console.error("Register error:", error);
-    res.json({ success: false, message: "Something went wrong. Please try again." });
+    res.json({ success: false, message: error.message });
   }
 };
 
 // LOGIN USER
 const loginUser = async (req, res) => {
   try {
-    let { email, password } = req.body;
-    email = typeof email === "string" ? email.trim().toLowerCase() : email;
-    if (!email || !password) return res.json({ success: false, message: "Missing details" });
-
+    const { email, password } = req.body;
     const user = await userModel.findOne({ email });
     if (!user) return res.json({ success: false, message: "User not found" });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.json({ success: false, message: "Invalid credentials" });
-
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET is not set in the environment");
-      return res.json({ success: false, message: "Server is misconfigured. Please contact support." });
-    }
-
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token });
   } catch (error) {
-    console.error("Login error:", error);
-    res.json({ success: false, message: "Something went wrong. Please try again." });
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -163,7 +134,7 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
-// ─── RAZORPAY PAYMENT ───────────────────────────────────────
+// ─── RAZORPAY PAYMENT ─────────────────────────────────────
 
 // Create Razorpay order
 const paymentRazorpay = async (req, res) => {
@@ -174,7 +145,7 @@ const paymentRazorpay = async (req, res) => {
       return res.json({ success: false, message: "Appointment not found or cancelled" });
     }
     const options = {
-      amount: appointmentData.amount * 100,
+      amount: appointmentData.amount * 100, // amount in paise
       currency: process.env.CURRENCY || "INR",
       receipt: appointmentId,
     };
@@ -190,22 +161,26 @@ const verifyRazorpay = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
 
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .update(body)
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
       return res.json({ success: false, message: "Payment verification failed" });
     }
 
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      payment: true,
-      paymentMethod: "razorpay",
-      razorpay_order_id,
-      razorpay_payment_id,
-    });
-    res.json({ success: true, message: "Payment verified" });
+    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
+    if (orderInfo.status === "paid") {
+      await appointmentModel.findByIdAndUpdate(appointmentId || orderInfo.receipt, {
+        payment: true,
+        paymentMethod: "razorpay",
+      });
+      res.json({ success: true, message: "Payment successful" });
+    } else {
+      res.json({ success: false, message: "Payment not completed" });
+    }
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
