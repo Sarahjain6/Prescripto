@@ -130,6 +130,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lowercase image owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -143,8 +148,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/prescripto-backend:latest
-            ghcr.io/${{ github.repository_owner }}/prescripto-backend:${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LC }}/prescripto-backend:latest
+            ghcr.io/${{ env.OWNER_LC }}/prescripto-backend:${{ github.sha }}
 
   docker-frontend:
     name: Docker Build & Push (Frontend)
@@ -156,6 +161,11 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Lowercase image owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -173,8 +183,8 @@ jobs:
             VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
             VITE_RAZORPAY_KEY_ID=${{ secrets.VITE_RAZORPAY_KEY_ID }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/prescripto-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/prescripto-frontend:${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LC }}/prescripto-frontend:latest
+            ghcr.io/${{ env.OWNER_LC }}/prescripto-frontend:${{ github.sha }}
 
   docker-admin:
     name: Docker Build & Push (Admin)
@@ -186,6 +196,11 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Lowercase image owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -202,5 +217,5 @@ jobs:
           build-args: |
             VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/prescripto-admin:latest
-            ghcr.io/${{ github.repository_owner }}/prescripto-admin:${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LC }}/prescripto-admin:latest
+            ghcr.io/${{ env.OWNER_LC }}/prescripto-admin:${{ github.sha }}
