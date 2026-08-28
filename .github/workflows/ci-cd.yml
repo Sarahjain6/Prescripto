@@ -105,4 +105,102 @@ jobs:
         run: |
           curl -sS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
 
- 
+  # NOTE: frontend and admin are NOT deployed here on purpose.
+  # Both are already connected to Vercel via Git integration
+  # (frontend -> prescripto-k3en, admin -> prescripto-nn59) and
+  # Vercel auto-builds + deploys them itself whenever this branch
+  # is pushed. The frontend-ci / admin-ci jobs above still act as
+  # a build/lint gate on PRs, they just don't trigger a deploy.
+
+  # ================= DOCKER (build & push images on push to master) =================
+  # Images are pushed to GitHub Container Registry (ghcr.io) using the
+  # repo's built-in GITHUB_TOKEN — no extra secrets needed. This runs
+  # alongside the Render/Vercel deploys above; it doesn't replace them.
+  # It exists so the project has real, pullable container images:
+  #   docker pull ghcr.io/sarahjain6/prescripto-backend:latest
+
+  docker-backend:
+    name: Docker Build & Push (Backend)
+    needs: backend-ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/prescripto-backend:latest
+            ghcr.io/${{ github.repository_owner }}/prescripto-backend:${{ github.sha }}
+
+  docker-frontend:
+    name: Docker Build & Push (Frontend)
+    needs: frontend-ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
+            VITE_RAZORPAY_KEY_ID=${{ secrets.VITE_RAZORPAY_KEY_ID }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/prescripto-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/prescripto-frontend:${{ github.sha }}
+
+  docker-admin:
+    name: Docker Build & Push (Admin)
+    needs: admin-ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./admin
+          push: true
+          build-args: |
+            VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/prescripto-admin:latest
+            ghcr.io/${{ github.repository_owner }}/prescripto-admin:${{ github.sha }}
