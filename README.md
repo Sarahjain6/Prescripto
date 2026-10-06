@@ -28,19 +28,20 @@ cd backend
 npm install
 ```
 
-Edit `.env` with your credentials:
+Copy `.env.example` to `.env` and fill in your credentials (never commit `.env`):
 ```env
 MONGODB_URI=your_mongodb_connection_string
 CLOUDINARY_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_SECRET_KEY=your_cloudinary_api_secret
-ADMIN_EMAIL=admin@prescripto.com
-ADMIN_PASSWORD=qwerty123
-JWT_SECRET=your_secret_key
+ADMIN_EMAIL=you@example.com
+ADMIN_PASSWORD=choose_a_strong_password   # required
+JWT_SECRET=a_random_string_of_32+_characters   # required
 PORT=4000
 CURRENCY=INR
 RAZORPAY_KEY_ID=your_razorpay_key_id       # Optional, for payments
 RAZORPAY_KEY_SECRET=your_razorpay_secret   # Optional, for payments
+CORS_ORIGINS=https://your-patient-app,https://your-admin-app   # Optional, defaults to the deployed Vercel apps + localhost
 ```
 
 ```bash
@@ -54,11 +55,7 @@ cd frontend
 npm install
 ```
 
-Edit `.env`:
-```env
-VITE_BACKEND_URL=http://localhost:4000
-VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
-```
+The frontend reads `VITE_BACKEND_URL` from `.env.development` (dev) / `.env.production` (build); see `.env.example`. Variables prefixed `VITE_` are public - never put secrets in them.
 
 ```bash
 npm run dev   # Starts on port 5173
@@ -71,10 +68,7 @@ cd admin
 npm install
 ```
 
-Edit `.env`:
-```env
-VITE_BACKEND_URL=http://localhost:4000
-```
+Same as the patient app: set `VITE_BACKEND_URL` in `.env.development` / `.env.production`.
 
 ```bash
 npm run dev   # Starts on port 5174
@@ -82,10 +76,9 @@ npm run dev   # Starts on port 5174
 
 ---
 
-## 🔑 Default Admin Credentials
+## 🔑 Admin Login
 
-- **Email:** admin@prescripto.com
-- **Password:** qwerty123
+The admin account is whatever you set as `ADMIN_EMAIL` / `ADMIN_PASSWORD` in the backend `.env`. There is no default password - the server will not start without them.
 
 ---
 

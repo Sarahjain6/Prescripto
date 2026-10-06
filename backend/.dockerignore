@@ -3,7 +3,9 @@ npm-debug.log
 .env
 .env.local
 uploads
+tests
 .git
 .gitignore
 Dockerfile
 .dockerignore
+.env.example

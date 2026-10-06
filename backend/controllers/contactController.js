@@ -1,17 +1,29 @@
+import validator from "validator";
 import contactModel from "../models/contactModel.js";
+import { isId } from "../utils/appointments.js";
+import { fail, serverError } from "../utils/respond.js";
 
-// Submit a contact message (public)
+// Submit a contact message (public, rate-limited in the route)
 const submitContact = async (req, res) => {
   try {
-    const { name, email, subject, message } = req.body;
-    if (!name || !email || !subject || !message) {
-      return res.json({ success: false, message: "All fields are required" });
+    let { name, email, subject, message } = req.body;
+    if ([name, email, subject, message].some((v) => typeof v !== "string" || !v.trim())) {
+      return fail(res, "All fields are required");
     }
-    const newContact = new contactModel({ name, email, subject, message, date: Date.now() });
-    await newContact.save();
+    name = name.trim();
+    email = email.trim().toLowerCase();
+    subject = subject.trim();
+    message = message.trim();
+
+    if (!validator.isEmail(email)) return fail(res, "Invalid email");
+    if (name.length > 100 || subject.length > 200 || message.length > 3000) {
+      return fail(res, "One of the fields is too long");
+    }
+
+    await new contactModel({ name, email, subject, message, date: Date.now() }).save();
     res.json({ success: true, message: "Message sent successfully" });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    serverError(res, error, "submitContact");
   }
 };
 
@@ -21,7 +33,7 @@ const getContacts = async (req, res) => {
     const contacts = await contactModel.find({}).sort({ date: -1 });
     res.json({ success: true, contacts });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    serverError(res, error, "getContacts");
   }
 };
 
@@ -29,10 +41,11 @@ const getContacts = async (req, res) => {
 const markRead = async (req, res) => {
   try {
     const { contactId } = req.body;
+    if (!isId(contactId)) return fail(res, "Invalid message");
     await contactModel.findByIdAndUpdate(contactId, { read: true });
     res.json({ success: true, message: "Marked as read" });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    serverError(res, error, "markRead");
   }
 };
 
@@ -40,10 +53,11 @@ const markRead = async (req, res) => {
 const deleteContact = async (req, res) => {
   try {
     const { contactId } = req.body;
+    if (!isId(contactId)) return fail(res, "Invalid message");
     await contactModel.findByIdAndDelete(contactId);
     res.json({ success: true, message: "Message deleted" });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    serverError(res, error, "deleteContact");
   }
 };
 

@@ -17,5 +17,9 @@ const appointmentSchema = new mongoose.Schema({
   razorpay_payment_id: { type: String, default: "" },
 });
 
+// Every "my appointments" / doctor / dashboard query filters on these fields
+appointmentSchema.index({ userId: 1, date: -1 });
+appointmentSchema.index({ docId: 1, date: -1 });
+
 const appointmentModel = mongoose.models.appointment || mongoose.model("appointment", appointmentSchema);
 export default appointmentModel;

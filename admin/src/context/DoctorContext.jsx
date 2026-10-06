@@ -28,7 +28,8 @@ const getValidStoredToken = (key) => {
 }
 
 const DoctorContextProvider = ({ children }) => {
-  const backendUrl = "https://doctor-backend-cbt3.onrender.com";
+  // set VITE_BACKEND_URL in .env.development / .env.production (or the host's env vars)
+  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/+$/, "");
   const [dToken, setDToken] = useState(() => getValidStoredToken("dToken"))
   const [appointments, setAppointments] = useState([])
   const [dashData, setDashData] = useState(null)

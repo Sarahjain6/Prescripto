@@ -28,7 +28,8 @@ const getValidStoredToken = (key) => {
 };
 
 const AppContextProvider = ({ children }) => {
-  const backendUrl = "https://doctor-backend-cbt3.onrender.com";
+  // set VITE_BACKEND_URL in .env.development / .env.production (or the host's env vars)
+  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/+$/, "");
   const currencySymbol = "₹";
 
   const [doctors, setDoctors] = useState([]);

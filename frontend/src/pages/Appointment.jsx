@@ -6,6 +6,18 @@ import { useAppContext } from '../context/AppContext'
 
 const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
+// The server validates slots in Indian Standard Time, so the picker must be
+// built from IST "now" too - otherwise a visitor whose device is in another
+// timezone would see slots the server then rejects.
+const getISTNow = () => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', hourCycle: 'h23',
+  }).formatToParts(new Date())
+  const get = (type) => Number(parts.find(p => p.type === type).value)
+  return { year: get('year'), month: get('month'), day: get('day'), hour: get('hour'), minute: get('minute') }
+}
+
 const Appointment = () => {
   const { docId } = useParams()
   const navigate = useNavigate()
@@ -25,15 +37,15 @@ const Appointment = () => {
   useEffect(() => {
     if (!docInfo) return
     const slots = []
-    const today = new Date()
+    const now = getISTNow()
     for (let i = 0; i < 7; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
+      // calendar date in IST (local Date object used only for its Y/M/D fields)
+      const date = new Date(now.year, now.month - 1, now.day + i)
       const times = []
-      let startHour = i === 0 ? Math.max(10, today.getHours() + 1) : 10
+      let startHour = i === 0 ? Math.max(10, now.hour + 1) : 10
       for (let h = startHour; h < 21; h++) {
         for (let m of [0, 30]) {
-          if (i === 0 && h === today.getHours() && m <= today.getMinutes()) continue
+          if (i === 0 && h === now.hour && m <= now.minute) continue
           const time = `${h > 12 ? h - 12 : h}:${m === 0 ? '00' : m} ${h >= 12 ? 'PM' : 'AM'}`
           const slotDate = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}`
           const isBooked = docInfo.slots_booked?.[slotDate]?.includes(time)
@@ -116,7 +128,8 @@ const Appointment = () => {
 
       {/* Slot picker */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-        <h2 className="text-xl font-extrabold text-slate-900 mb-6">Select Appointment Slot</h2>
+        <h2 className="text-xl font-extrabold text-slate-900 mb-1">Select Appointment Slot</h2>
+        <p className="text-xs text-slate-400 mb-6">All times are in Indian Standard Time (IST)</p>
 
         {/* Days */}
         <div className="flex gap-3 overflow-x-auto pb-2 mb-6">

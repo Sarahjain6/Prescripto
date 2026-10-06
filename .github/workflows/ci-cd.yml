@@ -30,11 +30,11 @@ jobs:
       - name: Lint (if configured)
         run: npm run lint --if-present
 
-      - name: Run tests (if configured)
-        run: npm test --if-present
+      - name: Run tests
+        run: npm test
 
-      - name: Sanity-check server boots
-        run: node -e "require('./package.json')"
+      - name: Syntax-check every source file
+        run: find . -name "*.js" -not -path "./node_modules/*" -exec node --check {} \;
 
   # ---------- FRONTEND (patient app) ----------
   frontend-ci:
